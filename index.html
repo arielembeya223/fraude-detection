@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fraud Detection Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="dashboard">
+
+        <!-- Section Graphe -->
+        <div class="card">
+            <h2>📊 Graphe des Transactions</h2>
+            <div id="graph-container"></div>
+        </div>
+
+        <!-- Section Alertes -->
+        <div class="card">
+            <h2>🔴 Alertes de Fraude</h2>
+            <div class="filters">
+                <select id="risk-filter">
+                    <option value="all">Tous</option>
+                    <option value="high">Risque élevé (>90%)</option>
+                    <option value="medium">Risque moyen (50-90%)</option>
+                </select>
+                <input type="text" id="search" placeholder="Rechercher...">
+            </div>
+            <table id="alerts-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Source</th>
+                        <th>Cible</th>
+                        <th>Montant</th>
+                        <th>Motif</th>
+                        <th>Score</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <!-- Section KPI (à placer en haut de votre dashboard) -->
+        <div class="kpi-container">
+            <div class="kpi-card">
+                <h3>📊 Transactions Analysées</h3>
+                <div class="kpi-value" id="total-transactions">0</div>
+                <div class="kpi-label">Total</div>
+            </div>
+            <div class="kpi-card">
+                <h3>🔴 Alertes de Fraude</h3>
+                <div class="kpi-value" id="total-alerts">0</div>
+                <div class="kpi-label">Dont risques élevés: <span id="high-risk-alerts">0</span></div>
+            </div>
+            <div class="kpi-card">
+                <h3>⏱️ Dernière Mise à Jour</h3>
+                <div class="kpi-value" id="last-update">--:--:--</div>
+                <div class="kpi-label">Temps réel</div>
+            </div>
+        </div>
+
+        
+
+        <!-- Section Transactions Temps Réel d-->
+        <div class="card">
+            <h2>🔄 Transactions Temps Réel</h2>
+            <table id="transactions-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Source</th>
+                        <th>Cible</th>
+                        <th>Montant</th>
+                        <th>Date/Heure</th>
+                        <th>Motif</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal pour les détails -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>Détails de la Transaction</h3>
+            <div id="modal-data"></div>
+            <div id="mini-graph"></div>
+        </div>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
