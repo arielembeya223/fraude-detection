@@ -30,10 +30,30 @@ const Dashboard = () => {
 
   return (
     <>
-    <div className="dashboard">
+    <div className="dashboard" style={{padding:'20px'}}>
       {/* Première ligne - Carte et KPIs */}
       <div className="card">
         <h2>📊 Graphe des Transactions</h2>
+        <a
+  href="/map"
+  style={{
+    display: 'inline-block',
+    padding: '10px 20px',
+    backgroundColor: '#3498db',
+    color: '#fff',
+    textDecoration: 'none',
+    borderRadius: '6px',
+    fontWeight: 'bold',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+    userSelect: 'none',
+    transition: 'background-color 0.3s ease',
+  }}
+  onMouseEnter={e => e.currentTarget.style.backgroundColor = '#2980b9'}
+  onMouseLeave={e => e.currentTarget.style.backgroundColor = '#3498db'}
+>
+  Full Carte
+</a>
+
         <WorldMap accounts={accountsData} connections={connectionsData} />
       </div>
       

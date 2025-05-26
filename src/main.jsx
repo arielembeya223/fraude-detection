@@ -6,6 +6,7 @@ import Dashboard from './components/Dashboard/Dashboard.jsx'
 import ReactDOM from 'react-dom/client'
 import Welcome from './components/Welcome/Welcome.jsx';
 import NotFound from './components/NotFound/NotFound.jsx'
+import FullScreenMap from './components/Map/FullScreenMap.jsx'
 const router = createBrowserRouter([
   {
     path: "/",
@@ -20,6 +21,11 @@ const router = createBrowserRouter([
       {
         path: "/dashboard",
         element: <Dashboard />,
+        
+      },
+      {
+        path: "/map",
+        element: <FullScreenMap />,
         
       },
     ],
