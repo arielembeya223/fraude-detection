@@ -1,0 +1,126 @@
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background-color: #f5f5f5;
+  position: relative;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 20% 20%, #8ef5c6 0%, transparent 50%),
+              radial-gradient(circle at 80% 80%, #77d8f7 0%, transparent 50%);
+  z-index: -1;
+  filter: blur(80px);
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 40px;
+  background-color: white;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo img {
+  height: 40px;
+}
+
+nav a {
+  margin-left: 30px;
+  text-decoration: none;
+  color: #333;
+  font-weight: bold;
+  transition: color 0.3s;
+}
+
+nav a:hover {
+  color: #00c896;
+}
+
+main {
+  margin-top: 100px;
+  padding: 40px;
+  max-width: 1000px;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+
+h1 {
+  text-transform: lowercase;
+  font-size: 28px;
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+
+h2 {
+  font-size: 26px;
+  font-weight: 600;
+  margin-bottom: 30px;
+}
+
+.highlight {
+  display: inline-block;
+  padding: 10px 24px;
+  background: linear-gradient(to right, #4666f4, #00d48c);
+  color: white;
+  border-radius: 999px;
+  font-weight: 500;
+  margin-bottom: 30px;
+  cursor: pointer;
+  transition: transform 0.2s;
+  text-decoration: none;
+}
+
+.highlight:hover {
+  transform: scale(1.05);
+}
+
+.features {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  margin-top: 50px;
+  flex-wrap: wrap;
+}
+
+.feature-card {
+  background: white;
+  border-radius: 16px;
+  padding: 30px 20px;
+  width: 220px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+  font-weight: 500;
+  font-size: 16px;
+  transition: all 0.3s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.feature-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 32px rgba(0, 168, 107, 0.2);
+}
+
+.feature-icon {
+  font-size: 36px;
+}
+
+.btn {
+  display: none;
+}
