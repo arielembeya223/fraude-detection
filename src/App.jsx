@@ -1,12 +1,10 @@
 import React from 'react';
-import Dashboard from './components/Dashboard';
-import './App.css';
-
+import { Outlet } from 'react-router-dom'
 const App = () => {
   return (
-    <div className="dashboard">
-      <Dashboard />
-    </div>
+    
+      <Outlet />
+    
   );
 };
 

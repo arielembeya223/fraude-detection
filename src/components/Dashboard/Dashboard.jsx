@@ -3,7 +3,7 @@ import WorldMap from './WorldMap';
 import AlertsTable from './AlertsTable';
 import LiveTransactions from './LiveTransactions';
 import AnalyticsKPIs from './AnalyticsKPIs';
-
+import './App.css';
 const Dashboard = () => {
   // Données simulées
   const accountsData = [
@@ -30,6 +30,7 @@ const Dashboard = () => {
 
   return (
     <>
+    <div className="dashboard">
       {/* Première ligne - Carte et KPIs */}
       <div className="card">
         <h2>📊 Graphe des Transactions</h2>
@@ -53,6 +54,7 @@ const Dashboard = () => {
         <h2>🔄 Transactions Temps Réel</h2>
         <LiveTransactions />
       </div>
+    </div>
     </>
   );
 };
