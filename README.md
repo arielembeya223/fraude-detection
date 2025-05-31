@@ -53,5 +53,4 @@ Concepts :
 
 - Intégration d’un algorithme **semi-supervisé** pour affiner la détection  
 - Comparaison avec des approches traditionnelles (SVM, KMeans, etc.)  
-- Interface simple pour visualiser les transactions frauduleuses  
-
+- Interface simple pour visualiser les transactions frauduleuses
