@@ -25,11 +25,12 @@ const welcome = () => {
         <div className="features">
           <div className="feature-card">
             <div className="feature-icon">⚡</div>
-            <div>Analyse rapide</div>
+            <div>Tableau de bord
+            </div>
           </div>
           <div className="feature-card">
             <div className="feature-icon">🧠</div>
-            <div>Algorithme intelligent</div>
+            <div>Rapport  intelligent</div>
           </div>
           <div className="feature-card">
             <div className="feature-icon">📊</div>
