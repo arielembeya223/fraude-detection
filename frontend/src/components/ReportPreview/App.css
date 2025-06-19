@@ -1,0 +1,70 @@
+/* Container principal */
+.pages-container {
+  width: 100%;
+  max-height: 500px; /* Hauteur maximale fixe */
+  overflow-x: auto; /* Défilement horizontal si nécessaire */
+  overflow-y: hidden; /* Pas de défilement vertical */
+  padding: 20px 0;
+  background: #f8f8f8;
+  border-radius: 8px;
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+}
+
+/* Conteneur des pages */
+.docx-pages {
+  display: flex;
+  gap: 20px;
+  padding: 0 20px;
+  height: 100%;
+}
+
+/* Style des pages individuelles */
+.compact-pages .docx-page {
+  flex: 0 0 auto;
+  width: 400px; /* Largeur fixe pour chaque page */
+  height: 500px; /* Hauteur fixe */
+  transform: scale(0.8);
+  transform-origin: top left;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  background: white;
+  padding: 20px;
+  overflow: hidden;
+}
+
+/* Styles existants à conserver */
+.app-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.preview-main {
+  flex-grow: 1;
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 40px;
+  background-color: white;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+/* Barre de défilement stylisée */
+.pages-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+.pages-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.pages-container::-webkit-scrollbar-thumb {
+  background: #00c896;
+  border-radius: 4px;
+}
