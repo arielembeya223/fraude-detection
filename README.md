@@ -53,11 +53,11 @@ php artisan cache:clear
 
 # Serve the backend
 php artisan serve --host=localhost --port=8000
-##2. frontend
+###  2. frontend
 cd frontend
 npm install
 npm run dev
-#3 .simulator
+### 3.simulator
 cd api
 pip install -r requirements.txt
 python app.py
