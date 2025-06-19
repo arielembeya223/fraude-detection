@@ -12,9 +12,12 @@ This project is a multi-component system for fraud detection simulation and user
 
 ## Folder Structure
 
+
+
 /backend # Laravel backend API
 /frontend # React frontend SPA
 /api # Python Flask fraud detection simulator
+
 
 ---
 
@@ -38,12 +41,11 @@ composer install
 # Copy .env and set your config
 cp .env.example .env
 
-# Update .env:
+# Update .env with your local config:
 # APP_URL=http://localhost:8000
 # SANCTUM_STATEFUL_DOMAINS=localhost:5173
 # SESSION_DOMAIN=localhost
-# DB_*
-
+# Database credentials (DB_*)
 php artisan key:generate
 php artisan migrate
 
@@ -53,11 +55,12 @@ php artisan cache:clear
 
 # Serve the backend
 php artisan serve --host=localhost --port=8000
-###  2. frontend
-cd frontend
+
+### 2. frontend (react)
 npm install
 npm run dev
-### 3.simulator
+
+### 2. api (python)
 cd api
 pip install -r requirements.txt
 python app.py
