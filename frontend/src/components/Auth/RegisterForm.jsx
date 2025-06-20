@@ -53,7 +53,7 @@ function RegisterForm() {
       // 3. Stockage du token et redirection
       localStorage.setItem('auth_token', data.access_token);
       localStorage.setItem('user', JSON.stringify(data.user));
-      navigate('/dashboard');
+      navigate('/FraudMonitoringDashboard');
     } catch (err) {
       console.log("ERREUR:", err);
       if (err.response) {

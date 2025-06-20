@@ -12,6 +12,8 @@ import ReportConfiguration from './components/ReportConfiguration/ReportConfigur
 import ReportPreview from './components/ReportPreview/ReportPreview.jsx'
 import LoginForm from './components/Auth/LoginForm.jsx'
 import RegisterForm from './components/Auth/RegisterForm.jsx'
+import FraudMonitoringDashboard from './components/FraudMonitoringDashboard/FraudMonitoringDashboard.jsx'
+import FraudAccountManagement from './components/FraudAccountManagement/FraudAccountManagement.jsx'
 const router = createBrowserRouter([
   {
     path: "/",
@@ -56,6 +58,16 @@ const router = createBrowserRouter([
       ,{
         path: "/register",
         element: <RegisterForm/>,
+        
+      }
+       ,{
+        path: "/FraudMonitoringDashboard",
+        element: <FraudMonitoringDashboard/>,
+        
+      },
+      {
+        path: "/FraudAccountManagement",
+        element: <FraudAccountManagement/>,
         
       }
     ],

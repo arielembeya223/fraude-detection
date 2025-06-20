@@ -129,6 +129,7 @@ const Welcome = () => {
           <a href="#" style={styles.navLink}>Accueil</a>
           <a href="/login" style={styles.navLink}>Se connecter</a>
           <a href="/register" style={styles.navLink}>S'inscrire</a>
+          <a href="/FraudAccountManagement" style={styles.navLink}>Account Management</a> 
         </nav>
       </header>
 
