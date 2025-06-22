@@ -14,6 +14,7 @@ import LoginForm from './components/Auth/LoginForm.jsx'
 import RegisterForm from './components/Auth/RegisterForm.jsx'
 import FraudMonitoringDashboard from './components/FraudMonitoringDashboard/FraudMonitoringDashboard.jsx'
 import FraudAccountManagement from './components/FraudAccountManagement/FraudAccountManagement.jsx'
+import ReportDetails from './components/UploadReport/ReportDetails.jsx'
 const router = createBrowserRouter([
   {
     path: "/",
@@ -38,6 +39,11 @@ const router = createBrowserRouter([
       {
         path: "/report",
         element: <FinancialReport/>,
+        
+      },
+      {
+        path:"/report/:id",
+        element: <ReportDetails/>,
         
       },
      {

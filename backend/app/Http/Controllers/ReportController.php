@@ -97,38 +97,74 @@ $report = Report::create([
      */
     public function index()
     {
-        // Version de base
-        $reports = Auth::user()->reports()
-                      ->orderBy('created_at', 'desc')
-                      ->get();
+        try {
+            $reports = Report::orderBy('created_at', 'desc')
+                ->get()
+                ->map(function ($report) {
+                    return [
+                        'id' => $report->id,
+                        'type' => $report->type,
+                        'title' => 'Rapport ' . $report->type,
+                        'date' => $report->created_at->format('d/m/Y'),
+                        'time' => $report->created_at->format('H:i'),
+                        'created_at' => $report->created_at->toDateTimeString(),
+                        'data_summary' => $this->summarizeData($report->data) // Fonction helper
+                    ];
+                });
 
-        // Version avec pagination (optionnelle)
-        // $reports = Auth::user()->reports()
-        //               ->orderBy('created_at', 'desc')
-        //               ->paginate(10);
+            return response()->json([
+                'success' => true,
+                'reports' => $reports,
+                'count' => $reports->count()
+            ]);
 
-        return response()->json([
-            'success' => true,
-            'reports' => $reports
-        ]);
+        } catch (\Exception $e) {
+            Log::error('Error fetching reports: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la récupération des rapports',
+                'error' => env('APP_DEBUG') ? $e->getMessage() : null
+            ], 500);
+        }
     }
 
     /**
      * Récupère un rapport spécifique
      */
-    public function show(Report $report)
+ private function summarizeData($data)
     {
-        // Vérifie que l'utilisateur peut accéder à ce rapport
-        if ($report->user_id !== Auth::id()) {
+        if (!is_array($data)) {
+            $data = json_decode($data, true) ?? [];
+        }
+
+        return [
+            'items_count' => count($data),
+            'first_items' => array_slice($data, 0, 3)
+        ];
+    }
+
+    /**
+     * Affiche un rapport spécifique (sans auth)
+     */
+    public function show($id)
+    {
+        $report = Report::find($id);
+
+        if (!$report) {
             return response()->json([
                 'success' => false,
-                'message' => 'Accès non autorisé'
-            ], 403);
+                'message' => 'Rapport non trouvé'
+            ], 404);
         }
 
         return response()->json([
             'success' => true,
-            'report' => $report
+            'report' => [
+                'id' => $report->id,
+                'type' => $report->type,
+                'full_data' => $report->data,
+                'created_at' => $report->created_at->format('d/m/Y H:i:s')
+            ]
         ]);
     }
 }
