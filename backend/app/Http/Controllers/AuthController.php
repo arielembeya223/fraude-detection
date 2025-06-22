@@ -35,29 +35,32 @@ class AuthController extends Controller
         ], 201);
     }
 
-    public function login(Request $request)
-    {
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
-        ]);
+public function login(Request $request)
+{
+    $credentials = $request->validate([
+        'email' => 'required|email',
+        'password' => 'required|string|min:6',
+    ]);
 
-        if (!Auth::attempt($request->only('email', 'password'))) {
-            throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect.'],
-            ]);
-        }
-
-        $user = $request->user();
-        $token = $user->createToken('auth_token')->plainTextToken;
-
+    if (!Auth::attempt($credentials)) {
         return response()->json([
-            'access_token' => $token,
-            'token_type' => 'Bearer',
-            'user' => $user,
-            'message' => 'Login successful'
-        ]);
+            'message' => 'Invalid credentials',
+            'errors' => [
+                'email' => ['The provided credentials are incorrect.']
+            ]
+        ], 401);
     }
+
+    $user = $request->user();
+    $token = $user->createToken('auth_token', ['*'])->plainTextToken;
+
+    return response()->json([
+        'access_token' => $token,
+        'token_type' => 'Bearer',
+        'user' => $user->only('id', 'name', 'email'),
+        'expires_in' => config('sanctum.expiration', 60 * 24 * 7) // 1 semaine par défaut
+    ]);
+}
 
     public function logout(Request $request)
     {

@@ -47,6 +47,64 @@ const FraudAccountManagement = () => {
     const banks = ["Federal Bank USA", "Crédit Européen", "Global Finance", "Pacific Bank"];
     return banks[Math.floor(Math.random() * banks.length)];
   };
+const generateReport = async () => {
+  try {
+    // 1. Préparer les données au même format que dans ta curl
+    const reportData = {
+      stats,           // doit être défini quelque part dans ton code
+      accounts: filteredAccounts,  // idem, tableau filtré
+      generatedAt: new Date().toISOString(),  // format ISO UTC exact
+    };
+
+    // 2. Envoyer la requête POST avec le bon body
+    const response = await fetch('http://localhost:8000/api/reports', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        // Si tu n'as pas besoin d'auth, tu peux retirer la ligne suivante
+        'Authorization': `Bearer ${localStorage.getItem('auth_token') || ''}`,
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({
+        data: reportData,  // objet direct, exactement comme dans ta curl
+        type: 'test_report' // identique à curl, sinon adapte ici
+      }),
+      credentials: 'include', // garde si tu utilises cookies de session
+    });
+
+    // 3. Validation du content-type
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      const text = await response.text();
+      console.error('Réponse non JSON:', text);
+      throw new Error('Le serveur a retourné une réponse non JSON');
+    }
+
+    // 4. Extraire JSON et vérifier succès
+    const result = await response.json();
+
+    if (!response.ok || result.success === false) {
+      // Utilise le message du serveur si dispo, sinon un message générique
+      const msg = result.error_message || result.message || 'Erreur lors de la sauvegarde';
+      throw new Error(msg);
+    }
+
+    // 5. Retour et feedback utilisateur
+    alert(`Rapport #${result.report_id} enregistré avec succès !`);
+    console.log('Réponse serveur:', result);
+
+    return result; // utile si tu veux utiliser la réponse ailleurs
+
+  } catch (error) {
+    console.error('Erreur complète:', error);
+
+    const errorMessage = error.message.includes('JSON') 
+      ? 'Erreur de communication avec le serveur' 
+      : error.message;
+
+    alert(`Échec de l'enregistrement : ${errorMessage}`);
+  }
+};
 
   // Charger les données initiales
   const fetchData = async () => {
@@ -189,9 +247,9 @@ const FraudAccountManagement = () => {
           <p>Surveillance et gestion des comptes suspects et frauduleux</p>
         </div>
         <div className="header-right">
-          <button className="btn btn-primary">
-            <FontAwesomeIcon icon={faFileExport} /> Exporter le rapport
-          </button>
+        <button className="btn btn-primary" onClick={generateReport}>
+          <FontAwesomeIcon icon={faFileExport} /> le rapport
+        </button>
           <button className="btn btn-secondary" onClick={fetchData}>
             <FontAwesomeIcon icon={faSyncAlt} /> Actualiser
           </button>
