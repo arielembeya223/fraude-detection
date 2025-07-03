@@ -22,7 +22,7 @@ const AlertsTable = ({ alerts }) => {
             <td>{alert.source}</td>
             <td>{alert.target}</td>
             <td>{alert.amount}</td>
-            <td>{alert.score}%</td>
+            <td>{alert.fraud_probability}%</td>
           </tr>
         ))}
       </tbody>

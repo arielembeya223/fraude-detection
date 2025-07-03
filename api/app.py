@@ -5,202 +5,138 @@ import numpy as np
 import joblib
 import time
 import json
+from datetime import datetime
 
 app = Flask(__name__)
+CORS(app)
 
-# Configuration CORS détaillée
-CORS(app, resources={
-    r"/api/*": {
-        "origins": ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000"],
-        "methods": ["GET", "POST", "OPTIONS"],
-        "allow_headers": ["Content-Type", "Authorization"],
-        "supports_credentials": True,
-        "max_age": 3600
-    }
-})
-
-# Chargement du modèle de détection de fraude
+# Chargement du modèle
 try:
-    pipeline = joblib.load('fraud_detection_pipeline.pkl')
+    pipeline = joblib.load('fraud_detection_fin.pkl')
     print("Modèle chargé avec succès")
 except Exception as e:
-    print(f"Erreur lors du chargement du modèle : {e}")
+    print(f"Erreur de chargement: {e}")
     pipeline = None
-    exit()
-def generate_transaction(force_fraud=None):
-    """Génère une transaction aléatoire avec des positions géographiques par continent"""
-    is_fraud = random.choice([True, False]) if force_fraud is None else force_fraud
 
-    # Simulation des caractéristiques de la transaction
+# Configuration des continents
+CONTINENTS = {
+    'north_america': {'lat': (25, 50), 'lon': (-130, -60)},
+    'south_america': {'lat': (-55, 15), 'lon': (-85, -30)},
+    'europe': {'lat': (35, 70), 'lon': (-25, 50)},
+    'africa': {'lat': (-35, 35), 'lon': (-20, 55)},
+    'asia': {'lat': (5, 60), 'lon': (40, 150)},
+    'oceania': {'lat': (-50, -5), 'lon': (100, 180)}
+}
+
+HIGH_RISK_COUNTRIES = ['NG', 'RU', 'UA', 'ZA', 'BR', 'CO', 'MX', 'PH', 'IN', 'CN']
+
+def generate_coordinates(continent):
+    """Génère des coordonnées aléatoires dans un continent"""
+    lat = random.uniform(*CONTINENTS[continent]['lat'])
+    lon = random.uniform(*CONTINENTS[continent]['lon'])
+    return lat, lon
+
+def is_high_risk(continent):
+    """Détermine si la transaction est à haut risque"""
+    return random.choice([True, False, False])  # 1/3 de chance
+
+def generate_transaction(force_fraud=False):
+    """Génère une transaction avec des caractéristiques réalistes"""
+    # Augmentation des fraudes (30% au lieu de 10%)
+    is_fraud = force_fraud or (random.random() < 0.3)
+    
+    # Caractéristiques différentes pour fraude/non-fraude
     if is_fraud:
-        amount = random.uniform(500, 5000)
-        tx_type = random.randint(0, 1)
-        prior_tx = random.randint(0, 5)
+        amount = random.uniform(500, 10000)
         risk_score = random.uniform(0.7, 1.0)
-        hour = random.choice([0, 1, 2, 3, 4])
-        total_amount = amount * random.uniform(1.5, 3.0)
-        avg_amount = total_amount / max(1, prior_tx)
+        hour = random.choice([0, 1, 2, 3, 4, 23])  # Heures suspectes
     else:
-        amount = random.uniform(10, 500)
-        tx_type = random.randint(0, 1)
-        prior_tx = random.randint(5, 100)
+        amount = random.uniform(10, 2000)
         risk_score = random.uniform(0.0, 0.3)
         hour = random.randint(8, 20)
-        total_amount = amount * random.uniform(1.0, 1.5)
-        avg_amount = total_amount / max(1, prior_tx)
-
-    # Définir les régions continentales (latitude, longitude, étendue)
-    continents = {
-        'north_america': {'lat_range': (30, 50), 'lon_range': (-130, -70)},
-        'south_america': {'lat_range': (-40, 10), 'lon_range': (-80, -40)},
-        'europe': {'lat_range': (35, 60), 'lon_range': (-10, 30)},
-        'africa': {'lat_range': (-35, 20), 'lon_range': (-20, 50)},
-        'asia': {'lat_range': (10, 50), 'lon_range': (60, 120)},
-        'australia': {'lat_range': (-40, -10), 'lon_range': (110, 155)}
+    
+    # Choix des continents (plus souvent inter-continents pour les fraudes)
+    if is_fraud and random.random() < 0.8:  # 80% inter-continents
+        src_cont, tgt_cont = random.sample(list(CONTINENTS.keys()), 2)
+    else:
+        src_cont = random.choice(list(CONTINENTS.keys()))
+        tgt_cont = random.choice(list(CONTINENTS.keys()))
+    
+    # Génération des coordonnées
+    src_lat, src_lon = generate_coordinates(src_cont)
+    tgt_lat, tgt_lon = generate_coordinates(tgt_cont)
+    
+    # Pour les fraudes, on ajoute parfois des distances extrêmes
+    if is_fraud and random.random() < 0.4:
+        if random.choice([True, False]):
+            tgt_lat = src_lat + random.choice([-30, 30])
+            tgt_lon = src_lon + random.choice([-60, 60])
+        else:
+            # Transaction entre hémisphères opposés
+            tgt_lat = -src_lat * 0.8
+            tgt_lon = src_lon + 180 if src_lon < 0 else src_lon - 180
+    
+    # Features pour le modèle
+    features = np.array([
+        amount,
+        random.randint(0, 1),  # type
+        random.randint(1, 100),  # nb transactions
+        risk_score,
+        hour,
+        amount * random.uniform(0.8, 1.5),  # total amount
+        amount * random.uniform(0.5, 2.0)   # avg amount
+    ], dtype=np.float32)
+    
+    return {
+        'features': features,
+        'is_fraud': is_fraud,
+        'geo': {
+            'src_lat': src_lat,
+            'src_lon': src_lon,
+            'tgt_lat': tgt_lat,
+            'tgt_lon': tgt_lon
+        },
+        'accounts': (
+            f"ACC{random.randint(100000, 999999)}",
+            f"ACC{random.randint(100000, 999999)}"
+        ),
+        'timestamp': int(time.time() * 1000)
     }
-
-    # Choisir deux continents distincts pour source et target
-    source_continent, target_continent = random.sample(list(continents.keys()), 2)
-    
-    # Générer des coordonnées pour la source
-    source_region = continents[source_continent]
-    source_lat = random.uniform(*source_region['lat_range'])
-    source_lon = random.uniform(*source_region['lon_range'])
-    
-    # Générer des coordonnées pour la target
-    target_region = continents[target_continent]
-    target_lat = random.uniform(*target_region['lat_range'])
-    target_lon = random.uniform(*target_region['lon_range'])
-
-    # Pour les fraudes, on peut parfois avoir des connexions intra-continentales
-    # mais avec une distance minimale
-    if is_fraud and random.random() < 0.3:
-        target_lat = source_lat + random.uniform(5, 15) * random.choice([-1, 1])
-        target_lon = source_lon + random.uniform(5, 15) * random.choice([-1, 1])
-        
-        # Clamping
-        target_lat = max(-90, min(90, target_lat))
-        target_lon = max(-180, min(180, target_lon))
-
-    source_account = f"ACC{random.randint(100000, 999999)}"
-    destination_account = f"ACC{random.randint(100000, 999999)}"
-
-    features = np.array([
-        amount, tx_type, prior_tx, risk_score,
-        hour, total_amount, avg_amount
-    ], dtype=np.float32)
-
-    return (
-        features, is_fraud,
-        source_lat, source_lon,
-        target_lat, target_lon,
-        source_account, destination_account
-    )
- 
-
-    # Simulation des caractéristiques de la transaction
-    if is_fraud:
-        amount = random.uniform(500, 5000)
-        tx_type = random.randint(0, 1)
-        prior_tx = random.randint(0, 5)
-        risk_score = random.uniform(0.7, 1.0)
-        hour = random.choice([0, 1, 2, 3, 4])
-        total_amount = amount * random.uniform(1.5, 3.0)
-        avg_amount = total_amount / max(1, prior_tx)
-    else:
-        amount = random.uniform(10, 500)
-        tx_type = random.randint(0, 1)
-        prior_tx = random.randint(5, 100)
-        risk_score = random.uniform(0.0, 0.3)
-        hour = random.randint(8, 20)
-        total_amount = amount * random.uniform(1.0, 1.5)
-        avg_amount = total_amount / max(1, prior_tx)
-
-    source_lat = random.uniform(-70, 70)
-    source_lon = random.uniform(-180, 180)
-
-    # Distance minimale en degrés pour éviter lignes plates
-    min_distance_deg = 0.5
-    max_tries = 10
-    for _ in range(max_tries):
-        target_lat = source_lat + random.uniform(-2, 2)
-        target_lon = source_lon + random.uniform(-2, 2)
-
-        # Clamping
-        target_lat = max(-90, min(90, target_lat))
-        target_lon = max(-180, min(180, target_lon))
-
-        delta_lat = abs(target_lat - source_lat)
-        delta_lon = abs(target_lon - source_lon)
-
-        # ✅ Vérifie que les deux dimensions sont suffisamment différentes
-        if delta_lat >= min_distance_deg and delta_lon >= min_distance_deg:
-            break
-    else:
-        # En cas d’échec, forcer un écart suffisant
-        target_lat = source_lat + min_distance_deg * (1 if random.random() < 0.5 else -1)
-        target_lon = source_lon + min_distance_deg * (1 if random.random() < 0.5 else -1)
-
-    source_account = f"ACC{random.randint(100000, 999999)}"
-    destination_account = f"ACC{random.randint(100000, 999999)}"
-
-    features = np.array([
-        amount, tx_type, prior_tx, risk_score,
-        hour, total_amount, avg_amount
-    ], dtype=np.float32)
-
-    return (
-        features, is_fraud,
-        source_lat, source_lon,
-        target_lat, target_lon,
-        source_account, destination_account
-    )
-
 
 @app.route('/api/transactions', methods=['GET'])
 def get_transactions():
-    """Endpoint pour récupérer un batch de transactions avec positions distinctes"""
+    """Endpoint batch avec plus de fraudes"""
     if not pipeline:
         return jsonify({"error": "Model not loaded"}), 500
-
+    
     transactions = []
-    for i in range(20):  # Génère 20 transactions
+    for _ in range(20):
         try:
-            (features, is_fraud, 
-             source_lat, source_lon, 
-             target_lat, target_lon, 
-             src, dst) = generate_transaction()
-            
-            prediction = pipeline.predict(features.reshape(1, -1))[0]
+            tx = generate_transaction()
+            proba = pipeline.predict_proba(tx['features'].reshape(1, -1))[0][1]
             
             transactions.append({
-                "id": f"TX{int(time.time() * 1000)}{i}",
-                "source": src,
-                "target": dst,
-                "source_latitude": float(source_lat),
-                "source_longitude": float(source_lon),
-                "target_latitude": float(target_lat),
-                "target_longitude": float(target_lon),
-                "amount": float(features[0]),
-                "is_fraud": bool(is_fraud),
-                "prediction": bool(prediction),
-                "type": "transaction",
-                "timestamp": int(time.time() * 1000),
-                "features": {
-                    "type": int(features[1]),
-                    "prior_transactions": int(features[2]),
-                    "risk_score": float(features[3]),
-                    "hour": int(features[4])
-                }
+                "id": f"TX{tx['timestamp']}",
+                "source": tx['accounts'][0],
+                "target": tx['accounts'][1],
+                "source_latitude": tx['geo']['src_lat'],
+                "source_longitude": tx['geo']['src_lon'],
+                "target_latitude": tx['geo']['tgt_lat'],
+                "target_longitude": tx['geo']['tgt_lon'],
+                "amount": float(tx['features'][0]),
+                "is_fraud": tx['is_fraud'],
+                "fraud_probability": float(proba),
+                "status": 'fraud' if tx['is_fraud'] else ('hot_potential' if proba > 0.4 else 'safe'),
+                "timestamp": tx['timestamp']
             })
         except Exception as e:
-            print(f"Error generating transaction {i}: {e}")
-
+            print(f"Error generating transaction: {e}")
+    
     return jsonify(transactions)
 
 @app.route('/api/transactions/stream', methods=['GET'])
 def stream_transactions():
-    """Endpoint de streaming SSE avec positions distinctes"""
+    """Streaming avec plus de fraudes et distances variables"""
     def generate():
         while True:
             try:
@@ -208,53 +144,38 @@ def stream_transactions():
                     yield "data: {}\n\n"
                     time.sleep(1)
                     continue
-
-                (features, is_fraud, 
-                 source_lat, source_lon, 
-                 target_lat, target_lon, 
-                 src, dst) = generate_transaction()
                 
-                prediction = pipeline.predict(features.reshape(1, -1))[0]
-
-                tx_data = {
-                    "id": f"TX{int(time.time() * 1000)}",
-                    "source": src,
-                    "target": dst,
-                    "source_latitude": float(source_lat),
-                    "source_longitude": float(source_lon),
-                    "target_latitude": float(target_lat),
-                    "target_longitude": float(target_lon),
-                    "amount": float(features[0]),
-                    "is_fraud": bool(is_fraud),
-                    "prediction": bool(prediction),
-                    "timestamp": int(time.time() * 1000)
+                # Génère plus souvent des fraudes (1 sur 3)
+                tx = generate_transaction(force_fraud=random.random() < 0.33)
+                proba = pipeline.predict_proba(tx['features'].reshape(1, -1))[0][1]
+                
+                data = {
+                    "id": f"TX{tx['timestamp']}",
+                    "source": tx['accounts'][0],
+                    "target": tx['accounts'][1],
+                    "source_latitude": tx['geo']['src_lat'],
+                    "source_longitude": tx['geo']['src_lon'],
+                    "target_latitude": tx['geo']['tgt_lat'],
+                    "target_longitude": tx['geo']['tgt_lon'],
+                    "amount": float(tx['features'][0]),
+                    "is_fraud": tx['is_fraud'],
+                    "fraud_probability": float(proba),
+                    "status": 'fraud' if tx['is_fraud'] else ('hot_potential' if proba > 0.4 else 'safe'),
+                    "timestamp": tx['timestamp']
                 }
-
-                yield f"data: {json.dumps(tx_data)}\n\n"
-                time.sleep(random.uniform(0.5, 2.5))
-
+                
+                yield f"data: {json.dumps(data)}\n\n"
+                time.sleep(random.uniform(0.1, 1.5))  # Délai variable
+                
             except Exception as e:
-                print(f"Error in stream: {e}")
+                print(f"Stream error: {e}")
                 time.sleep(1)
-
+    
     return Response(
         generate(),
         mimetype="text/event-stream",
-        headers={
-            'Cache-Control': 'no-cache',
-            'Connection': 'keep-alive',
-            'X-Accel-Buffering': 'no'
-        }
+        headers={'Cache-Control': 'no-cache'}
     )
-
-@app.route('/api/health', methods=['GET'])
-def health_check():
-    """Endpoint de vérification de santé"""
-    return jsonify({
-        "status": "healthy",
-        "model_loaded": pipeline is not None,
-        "timestamp": int(time.time() * 1000)
-    })
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

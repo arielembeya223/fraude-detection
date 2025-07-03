@@ -2,6 +2,47 @@ import React, { useState, useEffect } from 'react';
 import { faFileExport, faSyncAlt, faLock, faLockOpen, faEye, faBan, faUserLock, faUserCheck, faFileInvoiceDollar, faBell } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
+const styles = {
+    header: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '20px 40px',
+        backgroundColor: 'white',
+        boxShadow: '0 4px 10px rgba(0, 0, 0, 0.05)',
+        position: 'relative',
+    },
+    logo: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '10px',
+    },
+    logoImg: {
+        height: '40px',
+        width: 'auto',
+    },
+    navLink: {
+        marginLeft: '20px',
+        textDecoration: 'none',
+        color: '#333',
+        fontWeight: '500',
+        '&:hover': {
+            color: '#2e7d32',
+        }
+    },
+    dashboardHeader: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '20px',
+        backgroundColor: 'white',
+        borderRadius: '8px',
+        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+        borderLeft: '5px solid #2e7d32',
+        marginTop: '20px'
+    }
+};
+
 const FraudAccountManagement = () => {
   // États pour les données et l'interface
   const [searchTerm, setSearchTerm] = useState('');
@@ -47,64 +88,58 @@ const FraudAccountManagement = () => {
     const banks = ["Federal Bank USA", "Crédit Européen", "Global Finance", "Pacific Bank"];
     return banks[Math.floor(Math.random() * banks.length)];
   };
-const generateReport = async () => {
-  try {
-    // 1. Préparer les données au même format que dans ta curl
-    const reportData = {
-      stats,           // doit être défini quelque part dans ton code
-      accounts: filteredAccounts,  // idem, tableau filtré
-      generatedAt: new Date().toISOString(),  // format ISO UTC exact
-    };
 
-    // 2. Envoyer la requête POST avec le bon body
-    const response = await fetch('http://localhost:8000/api/reports', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        // Si tu n'as pas besoin d'auth, tu peux retirer la ligne suivante
-        'Authorization': `Bearer ${localStorage.getItem('auth_token') || ''}`,
-        'Accept': 'application/json',
-      },
-      body: JSON.stringify({
-        data: reportData,  // objet direct, exactement comme dans ta curl
-        type: 'test_report' // identique à curl, sinon adapte ici
-      }),
-      credentials: 'include', // garde si tu utilises cookies de session
-    });
+  const generateReport = async () => {
+    try {
+      const reportData = {
+        stats,
+        accounts: filteredAccounts,
+        generatedAt: new Date().toISOString(),
+      };
 
-    // 3. Validation du content-type
-    const contentType = response.headers.get('content-type');
-    if (!contentType || !contentType.includes('application/json')) {
-      const text = await response.text();
-      console.error('Réponse non JSON:', text);
-      throw new Error('Le serveur a retourné une réponse non JSON');
+      const response = await fetch('http://localhost:8000/api/reports', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth_token') || ''}`,
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          data: reportData,
+          type: 'test_report'
+        }),
+        credentials: 'include',
+      });
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        console.error('Réponse non JSON:', text);
+        throw new Error('Le serveur a retourné une réponse non JSON');
+      }
+
+      const result = await response.json();
+
+      if (!response.ok || result.success === false) {
+        const msg = result.error_message || result.message || 'Erreur lors de la sauvegarde';
+        throw new Error(msg);
+      }
+
+      alert(`Rapport #${result.report_id} enregistré avec succès !`);
+      console.log('Réponse serveur:', result);
+
+      return result;
+
+    } catch (error) {
+      console.error('Erreur complète:', error);
+
+      const errorMessage = error.message.includes('JSON') 
+        ? 'Erreur de communication avec le serveur' 
+        : error.message;
+
+      alert(`Échec de l'enregistrement : ${errorMessage}`);
     }
-
-    // 4. Extraire JSON et vérifier succès
-    const result = await response.json();
-
-    if (!response.ok || result.success === false) {
-      // Utilise le message du serveur si dispo, sinon un message générique
-      const msg = result.error_message || result.message || 'Erreur lors de la sauvegarde';
-      throw new Error(msg);
-    }
-
-    // 5. Retour et feedback utilisateur
-    alert(`Rapport #${result.report_id} enregistré avec succès !`);
-    console.log('Réponse serveur:', result);
-
-    return result; // utile si tu veux utiliser la réponse ailleurs
-
-  } catch (error) {
-    console.error('Erreur complète:', error);
-
-    const errorMessage = error.message.includes('JSON') 
-      ? 'Erreur de communication avec le serveur' 
-      : error.message;
-
-    alert(`Échec de l'enregistrement : ${errorMessage}`);
-  }
-};
+  };
 
   // Charger les données initiales
   const fetchData = async () => {
@@ -122,7 +157,6 @@ const generateReport = async () => {
       updateStats(formattedAccounts);
     } catch (err) {
       setError(err.message);
-      // Fallback avec des données mockées si l'API échoue
       setAccounts(generateMockData());
     } finally {
       setLoading(false);
@@ -141,7 +175,7 @@ const generateReport = async () => {
       blockedAccounts: blocked,
       investigations,
       fraudAmount,
-      newCases: Math.floor(Math.random() * 10) + 1 // Valeur aléatoire pour l'exemple
+      newCases: Math.floor(Math.random() * 10) + 1
     });
   };
 
@@ -241,20 +275,32 @@ const generateReport = async () => {
 
   return (
     <div className="dashboard-container">
-      <header>
-        <div className="header-left">
-          <h1>Gestion des Comptes Frauduleux</h1>
-          <p>Surveillance et gestion des comptes suspects et frauduleux</p>
+      <header style={styles.header}>
+        <div style={styles.logo}>
+          <img src="logo.png" alt="Logo Fraud Detection" style={styles.logoImg} />
+          <span><strong>Fraud Detection</strong></span>
         </div>
-        <div className="header-right">
-        <button className="btn btn-primary" onClick={generateReport}>
-          <FontAwesomeIcon icon={faFileExport} /> le rapport
-        </button>
+        <nav>
+          <a href="/" style={styles.navLink}>Accueil</a>
+          <a href="/login" style={styles.navLink}>Se connecter</a>
+          <a href="/register" style={styles.navLink}>S'inscrire</a>
+        </nav>
+      </header>
+
+      <div style={styles.dashboardHeader}>
+        <div className="header-left">
+          <h1 style={{ color: '#2e7d32', marginBottom: '5px', fontSize: '28px' }}>Gestion des Comptes Frauduleux</h1>
+          <p style={{ color: '#666', fontSize: '16px' }}>Surveillance et gestion des comptes suspects et frauduleux</p>
+        </div>
+        <div className="header-right" style={{ display: 'flex', gap: '15px' }}>
+          <button className="btn btn-primary" onClick={generateReport}>
+            <FontAwesomeIcon icon={faFileExport} /> le rapport
+          </button>
           <button className="btn btn-secondary" onClick={fetchData}>
             <FontAwesomeIcon icon={faSyncAlt} /> Actualiser
           </button>
         </div>
-      </header>
+      </div>
       
       <div className="stats-container">
         <div className="stat-card warning">
@@ -473,65 +519,6 @@ const generateReport = async () => {
           display: flex;
           flex-direction: column;
           gap: 25px;
-        }
-        
-        header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 20px;
-          background-color: var(--background-color);
-          border-radius: var(--border-radius);
-          box-shadow: var(--box-shadow);
-          border-left: 5px solid var(--primary-color);
-        }
-        
-        .header-left h1 {
-          color: var(--primary-color);
-          margin-bottom: 5px;
-          font-size: 28px;
-        }
-        
-        .header-left p {
-          color: #666;
-          font-size: 16px;
-        }
-        
-        .header-right {
-          display: flex;
-          gap: 15px;
-        }
-        
-        .btn {
-          padding: 12px 24px;
-          border-radius: var(--border-radius);
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          border: none;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-        
-        .btn-primary {
-          background-color: var(--primary-color);
-          color: white;
-        }
-        
-        .btn-primary:hover {
-          background-color: var(--dark-color);
-          transform: translateY(-2px);
-        }
-        
-        .btn-secondary {
-          background-color: var(--accent-color);
-          color: white;
-        }
-        
-        .btn-secondary:hover {
-          background-color: #1976d2;
-          transform: translateY(-2px);
         }
         
         .loading, .error {
@@ -792,6 +779,38 @@ const generateReport = async () => {
           border-color: var(--primary-color);
         }
         
+        .btn {
+          padding: 12px 24px;
+          border-radius: var(--border-radius);
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          border: none;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        
+        .btn-primary {
+          background-color: var(--primary-color);
+          color: white;
+        }
+        
+        .btn-primary:hover {
+          background-color: var(--dark-color);
+          transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+          background-color: var(--accent-color);
+          color: white;
+        }
+        
+        .btn-secondary:hover {
+          background-color: #1976d2;
+          transform: translateY(-2px);
+        }
+        
         @media (max-width: 1024px) {
           .stats-container {
             grid-template-columns: repeat(2, 1fr);
@@ -803,16 +822,6 @@ const generateReport = async () => {
         }
         
         @media (max-width: 768px) {
-          header {
-            flex-direction: column;
-            gap: 20px;
-          }
-          
-          .header-right {
-            width: 100%;
-            justify-content: center;
-          }
-          
           .stats-container {
             grid-template-columns: 1fr;
           }

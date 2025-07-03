@@ -45,46 +45,55 @@ const Dashboard = () => {
     const alerts = [];
     
     transactions.forEach(tx => {
-      // Process accounts
-      if (!accountsMap.has(tx.source)) {
-        accountsMap.set(tx.source, {
-          id: tx.source,
-          latitude: tx.source_latitude,
-          longitude: tx.source_longitude,
-          risk: tx.is_fraud || tx.prediction
-        });
-      }
-      
-      if (!accountsMap.has(tx.target)) {
-        accountsMap.set(tx.target, {
-          id: tx.target,
-          latitude: tx.target_latitude,
-          longitude: tx.target_longitude,
-          risk: false
-        });
-      }
+      // Use backend-provided status or fallback to prediction
+      const status = tx.status || (tx.prediction ? 'fraud' : 'no_fraud');
+      const fraudProbability = tx.fraud_probability !== undefined ? 
+                             tx.fraud_probability * 100 : 
+                             (tx.features?.risk_score || 0) * 100;
 
-      // Process connections
+      // Source account
+      accountsMap.set(tx.source, {
+        id: tx.source,
+        latitude: tx.source_latitude,
+        longitude: tx.source_longitude,
+        status: status,
+        fraud_probability: fraudProbability,
+        amount: tx.amount
+      });
+
+      // Target account (always safe unless specified)
+      accountsMap.set(tx.target, {
+        id: tx.target,
+        latitude: tx.target_latitude,
+        longitude: tx.target_longitude,
+        status: 'no_fraud',
+        fraud_probability: 0,
+        amount: tx.amount
+      });
+
+      // Connection
       connections.push({
         source: tx.source,
         target: tx.target,
         amount: tx.amount,
-        is_fraud: tx.is_fraud || tx.prediction
+        status: status,
+        fraud_probability: fraudProbability
       });
 
-      // Process alerts
-      if (tx.is_fraud || tx.prediction) {
+      // Alerts
+      if (status === 'fraud' || fraudProbability >= 70) {
         alerts.push({
           id: tx.id,
           source: tx.source,
           target: tx.target,
           amount: `${tx.amount.toFixed(2)} €`,
-          score: Math.floor(tx.features?.risk_score * 100) || 50
+          score: Math.floor(fraudProbability),
+          timestamp: tx.timestamp,
+          fraud_probability: fraudProbability.toFixed(2)
         });
       }
     });
 
-    // Update state
     setAccountsData(Array.from(accountsMap.values()));
     setConnectionsData(connections);
     setAlertsData(alerts);
@@ -92,7 +101,7 @@ const Dashboard = () => {
     setKpiData({
       totalTransactions: transactions.length,
       totalAlerts: alerts.length,
-      highRiskAlerts: alerts.filter(a => a.score >= 90).length
+      highRiskAlerts: alerts.filter(a => a.score >= 70).length
     });
   };
 
@@ -107,28 +116,34 @@ const Dashboard = () => {
       
       es.onmessage = (e) => {
         const newTx = JSON.parse(e.data);
-        
+        const status = newTx.status || (newTx.is_fraud ? 'fraud' : 'no_fraud');
+        const fraudProbability = newTx.fraud_probability !== undefined ? 
+                               newTx.fraud_probability * 100 : 
+                               (newTx.features?.risk_score || 0) * 100;
+
         // Update accounts
         setAccountsData(prev => {
           const newAccounts = new Map(prev.map(a => [a.id, a]));
           
-          if (!newAccounts.has(newTx.source)) {
-            newAccounts.set(newTx.source, {
-              id: newTx.source,
-              latitude: newTx.source_latitude,
-              longitude: newTx.source_longitude,
-              risk: newTx.is_fraud || newTx.prediction
-            });
-          }
-          
-          if (!newAccounts.has(newTx.target)) {
-            newAccounts.set(newTx.target, {
-              id: newTx.target,
-              latitude: newTx.target_latitude,
-              longitude: newTx.target_longitude,
-              risk: false
-            });
-          }
+          // Update source account
+          newAccounts.set(newTx.source, {
+            id: newTx.source,
+            latitude: newTx.source_latitude,
+            longitude: newTx.source_longitude,
+            status: status,
+            fraud_probability: fraudProbability,
+            amount: newTx.amount
+          });
+
+          // Update target account
+          newAccounts.set(newTx.target, {
+            id: newTx.target,
+            latitude: newTx.target_latitude,
+            longitude: newTx.target_longitude,
+            status: 'no_fraud',
+            fraud_probability: 0,
+            amount: newTx.amount
+          });
           
           return Array.from(newAccounts.values());
         });
@@ -138,18 +153,21 @@ const Dashboard = () => {
           source: newTx.source,
           target: newTx.target,
           amount: newTx.amount,
-          is_fraud: newTx.is_fraud || newTx.prediction
+          status: status,
+          fraud_probability: fraudProbability
         }]);
 
-        // Update alerts if fraudulent
-        if (newTx.is_fraud || newTx.prediction) {
+        // Update alerts if needed
+        if (status === 'fraud' || fraudProbability >= 70) {
           setAlertsData(prev => [{
             id: newTx.id,
             source: newTx.source,
             target: newTx.target,
             amount: `${newTx.amount.toFixed(2)} €`,
-            score: Math.floor((newTx.features?.risk_score || 0.7) * 100)
-          }, ...prev.slice(0, 49)]); // Keep max 50 alerts
+            score: Math.floor(fraudProbability),
+            timestamp: newTx.timestamp,
+            fraud_probability: fraudProbability.toFixed(2),
+          }, ...prev.slice(0, 49)]);
         }
 
         // Update live transactions
@@ -158,16 +176,17 @@ const Dashboard = () => {
           source: newTx.source,
           target: newTx.target,
           amount: `${newTx.amount.toFixed(2)} €`,
+          status: status,
           date: new Date(newTx.timestamp).toLocaleTimeString()
-        }, ...prev.slice(0, 9)]); // Keep last 10
+        }, ...prev.slice(0, 9)]);
 
         // Update KPIs
         setKpiData(prev => ({
           totalTransactions: prev.totalTransactions + 1,
-          totalAlerts: (newTx.is_fraud || newTx.prediction) ? prev.totalAlerts + 1 : prev.totalAlerts,
-          highRiskAlerts: ((newTx.is_fraud || newTx.prediction) && (newTx.features?.risk_score >= 0.9)) 
-            ? prev.highRiskAlerts + 1 
-            : prev.highRiskAlerts
+          totalAlerts: (status === 'fraud' || fraudProbability >= 70) ? 
+                      prev.totalAlerts + 1 : prev.totalAlerts,
+          highRiskAlerts: (status === 'fraud' || fraudProbability >= 70) ? 
+                          prev.highRiskAlerts + 1 : prev.highRiskAlerts
         }));
       };
 
@@ -187,38 +206,35 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard-container">
-      {/* Carte avec bouton de streaming */}
       <div className="dashboard-card full-width">
         <div className="card-header">
           <h2>📊 Graphe des Transactions</h2>
-          <a
-          href='map'
-            className={`stream-button ${isStreaming ? 'active' : ''}`}
-          >
-            full carte 
-          </a>
           <button 
             onClick={toggleStreaming}
             className={`stream-button ${isStreaming ? 'active' : ''}`}
           >
             {isStreaming ? 'Arrêter le Streaming' : 'Démarrer le Streaming'}
           </button>
+          <a
+            href='/map'
+            className={`stream-button ${isStreaming ? 'active' : ''}`}
+            style={{textDecoration:'none'}}
+          >
+            full map
+          </a>
         </div>
         <WorldMap accounts={accountsData} connections={connectionsData} />
       </div>
 
-      {/* KPIs */}
       <div className="kpi-container full-width">
         <AnalyticsKPIs data={kpiData} />
       </div>
 
-      {/* Alertes */}
       <div className="dashboard-card">
         <h2>🔴 Alertes de Fraude ({alertsData.length})</h2>
         <AlertsTable alerts={alertsData} />
       </div>
 
-      {/* Transactions */}
       <div className="dashboard-card">
         <h2>🔄 Transactions Temps Réel</h2>
         <LiveTransactions transactions={liveTransactions} />

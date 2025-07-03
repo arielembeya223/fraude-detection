@@ -109,8 +109,8 @@ const Welcome = () => {
 
   // Données des fonctionnalités
   const features = [
-    { icon: '⚡', text: 'Tableau de bord' },
-    { icon: '🧠', text: 'Rapport intelligent' },
+    { icon: '⚡', text: 'Tableau de bord' ,link:"/FraudAccountManagement" },
+    { icon: '🧠', text: 'account management',link:"/FraudAccountManagement" },
     { icon: '📊', text: 'Rapport détaillé', link: '/report' },
   ];
 
@@ -129,7 +129,7 @@ const Welcome = () => {
           <a href="#" style={styles.navLink}>Accueil</a>
           <a href="/login" style={styles.navLink}>Se connecter</a>
           <a href="/register" style={styles.navLink}>S'inscrire</a>
-          <a href="/FraudAccountManagement" style={styles.navLink}>Account Management</a> 
+          
         </nav>
       </header>
 
