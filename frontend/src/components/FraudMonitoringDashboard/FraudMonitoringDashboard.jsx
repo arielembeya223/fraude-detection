@@ -9,15 +9,25 @@ const FraudMonitoringDashboard = () => {
   const [blockedAccounts, setBlockedAccounts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [streamData, setStreamData] = useState([]);
+  const [timeFilter, setTimeFilter] = useState('second');
+  const [investigations, setInvestigations] = useState([]);
+  const [transactionsBySecond, setTransactionsBySecond] = useState([]);
 
   // Récupération des données initiales
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchInitialData = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/transactions');
-        const data = await response.json();
-        setTransactions(data);
-        prepareChartData(data);
+        // Charger les transactions avec le filtre par défaut (seconde)
+        const txResponse = await fetch(`http://localhost:5000/api/transactions?time_filter=${timeFilter}`);
+        const txData = await txResponse.json();
+        setTransactions(txData);
+        
+        // Charger les investigations
+        const invResponse = await fetch('http://localhost:5000/api/investigations');
+        const invData = await invResponse.json();
+        setInvestigations(invData);
+        
+        prepareChartData(txData);
         setIsLoading(false);
       } catch (error) {
         console.error("Erreur de chargement:", error);
@@ -25,8 +35,8 @@ const FraudMonitoringDashboard = () => {
       }
     };
 
-    fetchData();
-  }, []);
+    fetchInitialData();
+  }, [timeFilter]);
 
   // Connexion au flux temps réel
   useEffect(() => {
@@ -41,14 +51,70 @@ const FraudMonitoringDashboard = () => {
         prepareChartData(updated);
         return updated;
       });
+
+      // Mettre à jour les investigations si la nouvelle transaction est suspecte
+      if (newTransaction.is_fraud || newTransaction.prediction) {
+        setInvestigations(prev => {
+          const newInvestigation = {
+            id: newTransaction.id,
+            bank: `Bank ${newTransaction.source.slice(3, 6)}`,
+            client: newTransaction.source,
+            assignedTo: `Agent ${['A123', 'B456', 'C789'][Math.floor(Math.random() * 3)]}`,
+            status: newTransaction.is_fraud ? 'Confirmed fraud' : 'In review',
+            amount: newTransaction.amount,
+            location: `${newTransaction.source_latitude.toFixed(2)}, ${newTransaction.source_longitude.toFixed(2)}`,
+            timestamp: newTransaction.timestamp
+          };
+          return [newInvestigation, ...prev.slice(0, 9)]; // Garder seulement les 10 plus récentes
+        });
+      }
     };
 
     return () => eventSource.close();
   }, []);
 
+  // Préparation des données par seconde
+  const prepareTransactionsBySecond = (txs) => {
+    if (!txs || txs.length === 0) return;
+
+    // Grouper par seconde
+    const secondsMap = {};
+    
+    txs.forEach(tx => {
+      const date = new Date(tx.timestamp);
+      const seconds = date.getSeconds();
+      const minute = date.getMinutes();
+      const hour = date.getHours();
+      const secondKey = `${hour}:${minute}:${seconds}`;
+
+      if (!secondsMap[secondKey]) {
+        secondsMap[secondKey] = {
+          second: secondKey,
+          count: 0,
+          frauds: 0,
+          amount: 0
+        };
+      }
+
+      secondsMap[secondKey].count++;
+      if (tx.is_fraud) secondsMap[secondKey].frauds++;
+      secondsMap[secondKey].amount += tx.amount;
+    });
+
+    // Convertir en tableau et trier par temps
+    const result = Object.values(secondsMap).sort((a, b) => {
+      return a.second.localeCompare(b.second);
+    });
+
+    // Garder seulement les 60 dernières secondes
+    setTransactionsBySecond(result.slice(-60));
+  };
+
   // Préparation des données pour les graphiques
   const prepareChartData = (txs) => {
     if (!txs || txs.length === 0) return;
+
+    prepareTransactionsBySecond(txs);
 
     // Données par heure
     const hourlyStats = Array.from({length: 24}, (_, hour) => {
@@ -71,7 +137,7 @@ const FraudMonitoringDashboard = () => {
 
     const riskDistribution = riskLevels.map(level => {
       const count = txs.filter(tx => {
-        const riskScore = tx.features?.risk_score || 0;
+        const riskScore = tx.fraud_probability || 0;
         return riskScore >= level.min;
       }).length;
       return { ...level, value: count };
@@ -90,32 +156,27 @@ const FraudMonitoringDashboard = () => {
   // Calcul des statistiques
   const stats = {
     total: transactions.length,
-    unusual: transactions.filter(tx => tx.prediction).length,
+    unusual: transactions.filter(tx => tx.status === 'hot_potential').length,
     fraud: transactions.filter(tx => tx.is_fraud).length,
     amount: transactions.reduce((sum, tx) => sum + tx.amount, 0)
   };
 
   // Données pour les alertes
   const unusualAlerts = transactions
-    .filter(tx => tx.prediction)
+    .filter(tx => tx.status === 'hot_potential')
     .slice(0, 3)
     .map(tx => ({
       id: tx.id,
       client: tx.source,
-      description: `Transaction inhabituelle de $${tx.amount.toFixed(2)} vers ${tx.target}`
+      description: `Transaction inhabituelle de $${tx.amount.toFixed(2)} vers ${tx.target}`,
+      timestamp: tx.timestamp
     }));
 
-  // Données pour les investigations
-  const investigations = transactions
-    .filter(tx => tx.prediction || tx.is_fraud)
-    .slice(0, 4)
-    .map(tx => ({
-      id: tx.id,
-      bank: `Bank ${tx.source.slice(0, 4)}`,
-      client: tx.source,
-      assignedTo: `Agent ${tx.source.slice(0, 5)}`,
-      status: tx.is_fraud ? 'Confirmed fraud' : tx.prediction ? 'In review' : 'Verified'
-    }));
+  // Gestion du changement de filtre temporel
+  const handleTimeFilterChange = (filter) => {
+    setTimeFilter(filter);
+    setIsLoading(true);
+  };
 
   return (
     <div style={styles.dashboardContainer}>
@@ -134,22 +195,67 @@ const FraudMonitoringDashboard = () => {
               <p style={{...styles.statValue, color: '#FFA726'}}>{stats.unusual}</p>
             </div>
           </div>
+          <div style={styles.timeFilterContainer}>
+            <button 
+              style={timeFilter === 'second' ? styles.activeTimeFilter : styles.timeFilter}
+              onClick={() => handleTimeFilterChange('second')}
+            >
+              Second
+            </button>
+            <button 
+              style={timeFilter === 'minute' ? styles.activeTimeFilter : styles.timeFilter}
+              onClick={() => handleTimeFilterChange('minute')}
+            >
+              Minute
+            </button>
+            <button 
+              style={timeFilter === 'hour' ? styles.activeTimeFilter : styles.timeFilter}
+              onClick={() => handleTimeFilterChange('hour')}
+            >
+              Hour
+            </button>
+          </div>
         </div>
 
         {/* Carte Transaction Size */}
         <div style={styles.card}>
-          <h3 style={styles.cardTitle}>Transaction size (m/s)</h3>
+          <h3 style={styles.cardTitle}>Transactions par seconde</h3>
           <div style={styles.chartWrapper}>
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={hourlyData}>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart 
+                data={transactionsBySecond} 
+                margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+              >
                 <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-                <XAxis dataKey="hour" stroke="#757575" />
-                <YAxis stroke="#757575" />
-                <Tooltip />
+                <XAxis 
+                  dataKey="second" 
+                  stroke="#757575"
+                  label={{ 
+                    value: 'Secondes', 
+                    position: 'insideBottom', 
+                    offset: -40 
+                  }}
+                  angle={-45}
+                  textAnchor="end"
+                  height={60}
+                />
+                <YAxis 
+                  stroke="#757575"
+                  label={{ 
+                    value: 'Nb transactions', 
+                    angle: -90, 
+                    position: 'insideLeft' 
+                  }}
+                />
+                <Tooltip 
+                  formatter={(value) => [`${value} transactions`, 'Nombre']}
+                  labelFormatter={(value) => `Seconde ${value}`}
+                />
                 <Bar 
-                  dataKey="transactions" 
+                  dataKey="count" 
                   fill="#FFA726" 
                   radius={[4, 4, 0, 0]}
+                  name="Transactions"
                 />
               </BarChart>
             </ResponsiveContainer>
@@ -190,16 +296,21 @@ const FraudMonitoringDashboard = () => {
             <div style={styles.alertsList}>
               {unusualAlerts.length > 0 ? (
                 unusualAlerts.map(alert => (
-                  <div key={alert.id} style={styles.alertItem}>
+                  <div key={`${alert.id}-${alert.timestamp}`} style={styles.alertItem}>
                     <p style={styles.alertText}>
                       <strong>Client {alert.client}</strong> {alert.description}
                     </p>
-                    <button 
-                      style={styles.alertButton}
-                      onClick={() => blockAccount(alert.client)}
-                    >
-                      Block
-                    </button>
+                    <div style={styles.alertActions}>
+                      <button 
+                        style={styles.alertButton}
+                        onClick={() => blockAccount(alert.client)}
+                      >
+                        Block
+                      </button>
+                      <span style={styles.alertTime}>
+                        {new Date(alert.timestamp).toLocaleTimeString()}
+                      </span>
+                    </div>
                   </div>
                 ))
               ) : (
@@ -212,12 +323,14 @@ const FraudMonitoringDashboard = () => {
         {/* Colonne Investigations */}
         <div style={styles.column}>
           <div style={styles.section}>
-            <h3 style={styles.sectionTitle}>Ongoing investigation</h3>
+            <h3 style={styles.sectionTitle}>Ongoing investigations</h3>
             <table style={styles.investigationTable}>
               <thead>
                 <tr>
                   <th style={styles.tableHeader}>Bank</th>
                   <th style={styles.tableHeader}>Client</th>
+                  <th style={styles.tableHeader}>Amount</th>
+                  <th style={styles.tableHeader}>Location</th>
                   <th style={styles.tableHeader}>Assigned to</th>
                   <th style={styles.tableHeader}>Status</th>
                 </tr>
@@ -225,9 +338,11 @@ const FraudMonitoringDashboard = () => {
               <tbody>
                 {investigations.length > 0 ? (
                   investigations.map(invest => (
-                    <tr key={invest.id} style={styles.tableRow}>
+                    <tr key={`${invest.id}-${invest.timestamp}`} style={styles.tableRow}>
                       <td style={styles.tableCell}>{invest.bank}</td>
                       <td style={styles.tableCell}>{invest.client}</td>
+                      <td style={styles.tableCell}>${invest.amount.toFixed(2)}</td>
+                      <td style={styles.tableCell}>{invest.location}</td>
                       <td style={styles.tableCell}>{invest.assignedTo}</td>
                       <td style={styles.tableCell}>
                         <span style={getStatusStyle(invest.status)}>
@@ -238,7 +353,7 @@ const FraudMonitoringDashboard = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="4" style={{...styles.tableCell, textAlign: 'center'}}>
+                    <td colSpan="6" style={{...styles.tableCell, textAlign: 'center'}}>
                       No ongoing investigations
                     </td>
                   </tr>
@@ -251,7 +366,7 @@ const FraudMonitoringDashboard = () => {
 
       {/* Pied de page */}
       <div style={styles.footer}>
-        <p>Last updated: {new Date().toLocaleString()} | Status: {isLoading ? 'Loading...' : 'Active'}</p>
+        <p>Last updated: {new Date().toLocaleString()} | Status: {isLoading ? 'Loading...' : 'Active'} | Filter: {timeFilter}</p>
       </div>
     </div>
   );
@@ -312,8 +427,33 @@ const styles = {
     margin: '0',
     color: '#2c3e50'
   },
+  timeFilterContainer: {
+    display: 'flex',
+    gap: '10px',
+    marginTop: '15px'
+  },
+  timeFilter: {
+    flex: 1,
+    padding: '8px',
+    backgroundColor: '#f0f0f0',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    transition: 'all 0.2s'
+  },
+  activeTimeFilter: {
+    flex: 1,
+    padding: '8px',
+    backgroundColor: '#FFA726',
+    color: 'white',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontWeight: 'bold',
+    transition: 'all 0.2s'
+  },
   chartWrapper: {
-    height: '200px',
+    height: '300px',
     marginTop: '10px'
   },
   twoColumns: {
@@ -357,11 +497,16 @@ const styles = {
     fontSize: '14px',
     lineHeight: '1.4'
   },
+  alertActions: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center'
+  },
   alertButton: {
     backgroundColor: '#FB8C00',
     color: 'white',
     border: 'none',
-    padding: '8px 15px',
+    padding: '6px 12px',
     borderRadius: '4px',
     fontSize: '13px',
     cursor: 'pointer',
@@ -369,6 +514,10 @@ const styles = {
     ':hover': {
       backgroundColor: '#E65100'
     }
+  },
+  alertTime: {
+    fontSize: '12px',
+    color: '#757575'
   },
   noAlerts: {
     color: '#9E9E9E',

@@ -89,7 +89,7 @@ const Dashboard = () => {
           amount: `${tx.amount.toFixed(2)} €`,
           score: Math.floor(fraudProbability),
           timestamp: tx.timestamp,
-          fraud_probability: fraudProbability.toFixed(2)
+          fraud_probability: fraudProbability
         });
       }
     });

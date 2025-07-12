@@ -15,6 +15,7 @@ import RegisterForm from './components/Auth/RegisterForm.jsx'
 import FraudMonitoringDashboard from './components/FraudMonitoringDashboard/FraudMonitoringDashboard.jsx'
 import FraudAccountManagement from './components/FraudAccountManagement/FraudAccountManagement.jsx'
 import ReportDetails from './components/UploadReport/ReportDetails.jsx'
+import LandingPage from './components/LandingPage/LandingPage.jsx'
 const router = createBrowserRouter([
   {
     path: "/",
@@ -23,7 +24,7 @@ const router = createBrowserRouter([
     children: [
       {
         path: "/",
-        element: <Welcome />,
+        element: <LandingPage />,
         
       },
       {
@@ -66,6 +67,11 @@ const router = createBrowserRouter([
         element: <RegisterForm/>,
         
       }
+      ,{
+        path: "/welcome",
+        element: <Welcome/>,
+        
+      }
        ,{
         path: "/FraudMonitoringDashboard",
         element: <FraudMonitoringDashboard/>,
@@ -74,6 +80,12 @@ const router = createBrowserRouter([
       {
         path: "/FraudAccountManagement",
         element: <FraudAccountManagement/>,
+        
+      }
+      ,
+      {
+        path: "/LandingPage",
+        element: <LandingPage/>,
         
       }
     ],

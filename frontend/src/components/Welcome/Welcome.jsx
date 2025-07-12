@@ -110,7 +110,7 @@ const Welcome = () => {
   // Données des fonctionnalités
   const features = [
     { icon: '⚡', text: 'Tableau de bord' ,link:"/FraudAccountManagement" },
-    { icon: '🧠', text: 'account management',link:"/FraudAccountManagement" },
+    { icon: '🧠', text: 'account management',link:"/FraudMonitoringDashboard" },
     { icon: '📊', text: 'Rapport détaillé', link: '/report' },
   ];
 
