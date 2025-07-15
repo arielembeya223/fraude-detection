@@ -1,0 +1,147 @@
+/* ===== RESET ===== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f5f7fa;
+  color: #333;
+  line-height: 1.6;
+}
+
+/* ===== STRUCTURE DU DASHBOARD ===== */
+.dashboard-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  padding: 20px;
+  max-width: 1800px;
+  margin: 0 auto;
+}
+
+.dashboard-card {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  overflow: hidden; /* Empêche le débordement */
+}
+
+.full-width {
+  grid-column: 1 / -1;
+}
+
+/* ===== CARTE MONDIALE ===== */
+.map-container {
+  position: relative;
+}
+
+.map-controls {
+  margin-bottom: 15px;
+}
+
+.world-map-container {
+  width: 100%;
+  height: 400px; /* Hauteur fixe */
+  border-radius: 4px;
+  background-color: #e6f3ff;
+  position: relative;
+}
+
+/* ===== KPIs ===== */
+.kpi-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.kpi-card {
+  background: white;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+/* ===== TABLEAUX ===== */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+
+th, td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+/* ===== BOUTONS ===== */
+.map-link {
+  display: inline-block;
+  padding: 10px 20px;
+  background-color: #3498db;
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
+  font-weight: bold;
+  transition: background-color 0.3s;
+}
+
+.map-link:hover {
+  background-color: #2980b9;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .dashboard-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .world-map-container {
+    height: 300px;
+  }
+}
+/* Styles pour le streaming */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.stream-button {
+  padding: 8px 16px;
+  background-color: #2ecc71;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s;
+}
+
+.stream-button:hover {
+  background-color: #27ae60;
+}
+
+.stream-button.active {
+  background-color: #e74c3c;
+}
+
+.stream-button.active:hover {
+  background-color: #c0392b;
+}
+
+/* Animation pour nouvelles transactions */
+@keyframes highlight {
+  from { background-color: rgba(46, 204, 113, 0.3); }
+  to { background-color: transparent; }
+}
+
+.new-transaction {
+  animation: highlight 1.5s ease-out;
+}
