@@ -13,7 +13,7 @@ export default function LandingPage() {
 
   const introLines = [
     "Bienvenue sur Fraud Detection.",
-    "Notre solution révolutionne la sécurité financière grâce à l’analyse graphique et à l’IA.",
+    "Notre solution révolutionne la sécurité financière grâce à l'analyse graphique et à l'IA.",
     "Découvrez comment détecter les fraudes efficacement.",
   ];
 
@@ -59,9 +59,9 @@ export default function LandingPage() {
   return (
     <div style={styles.page}>
       <ParticleBackground />
-
       <div style={styles.bgOverlay}></div>
 
+      {/* Header with visible blue-green gradient */}
       <header style={styles.header}>
         <div style={styles.logo}>FRAUD DETECTION</div>
         <nav style={styles.nav}>
@@ -74,7 +74,6 @@ export default function LandingPage() {
         </nav>
       </header>
 
-      {/* Intro plein écran */}
       <section style={styles.heroFullScreen}>
         <motion.div
           initial={{ opacity: 0, y: -30, scale: 0.98 }}
@@ -104,7 +103,6 @@ export default function LandingPage() {
         </motion.div>
       </section>
 
-      {/* Sections scrollables */}
       {sections.map((sec, idx) => {
         const isEven = idx % 2 === 0;
         return (
@@ -159,20 +157,19 @@ const styles = {
     minHeight: "100vh",
     overflowX: "hidden",
   },
-bgOverlay: {
-  position: "fixed",
-  top: 0,
-  left: 0,
-  width: "100%",
-  height: "100%",
-  background: `
-    radial-gradient(circle at 25% 25%, #c2fff3 0%, transparent 50%),
-    radial-gradient(circle at 75% 75%, #cce6ff 0%, transparent 50%)
-  `,
-  filter: "blur(120px)",
-  zIndex: 0,
-},
-
+  bgOverlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    background: `
+      radial-gradient(circle at 25% 25%, #c2fff3 0%, transparent 50%),
+      radial-gradient(circle at 75% 75%, #cce6ff 0%, transparent 50%)
+    `,
+    filter: "blur(120px)",
+    zIndex: 0,
+  },
   header: {
     position: "fixed",
     top: 0,
@@ -182,26 +179,40 @@ bgOverlay: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: "18px 36px",
-    backgroundColor: "rgba(255,255,255,0.85)",
-    backdropFilter: "saturate(180%) blur(14px)",
+    padding: "24px 36px",
+    height: "80px",
+    background: `
+      linear-gradient(135deg, 
+        #8ef5c6 0%,
+        #77d8f7 100%
+      )
+    `,
+    boxShadow: "0 2px 15px rgba(0,0,0,0.1)",
+    color: "#2c2c2c",
     fontWeight: "700",
-    fontSize: 20,
+    fontSize: "20px",
   },
   logo: {
     color: "#2c2c2c",
+    fontWeight: "800",
+    letterSpacing: "1px",
   },
   nav: {
     display: "flex",
-    gap: 28,
+    gap: "20px",
   },
   navLink: {
-    color: "#00d48c",
+    color: "#2c2c2c",
     textDecoration: "none",
     fontWeight: "600",
-    fontSize: 17,
-    cursor: "pointer",
-    transition: "color 0.3s ease",
+    fontSize: "16px",
+    padding: "8px 16px",
+    borderRadius: "20px",
+    backgroundColor: "rgba(255,255,255,0.3)",
+    transition: "all 0.3s ease",
+    ":hover": {
+      backgroundColor: "rgba(255,255,255,0.5)",
+    },
   },
   heroFullScreen: {
     height: "100vh",

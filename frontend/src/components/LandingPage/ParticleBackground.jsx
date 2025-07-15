@@ -20,10 +20,10 @@ export default function ParticleBackground() {
         },
         particles: {
           number: {
-            value: 45,
+            value: 60,
             density: {
               enable: true,
-              area: 1200,
+              area: 2000,
             },
           },
           color: {
@@ -36,7 +36,7 @@ export default function ParticleBackground() {
             value: 0.3,
           },
           size: {
-            value: { min: 2, max: 4 },
+            value: { min: 6, max: 10 },
           },
           move: {
             enable: true,

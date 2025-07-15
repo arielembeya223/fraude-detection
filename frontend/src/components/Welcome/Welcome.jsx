@@ -1,5 +1,6 @@
 import React from 'react';
-import './App.css'
+import './App.css';
+
 const Welcome = () => {
   // Styles JSX
   const styles = {
@@ -80,6 +81,7 @@ const Welcome = () => {
       cursor: 'pointer',
       transition: 'transform 0.2s',
       textDecoration: 'none',
+      transform: 'scale(1.1)', // Agrandi en permanence
     },
     features: {
       display: 'flex',
@@ -92,25 +94,26 @@ const Welcome = () => {
       background: 'white',
       borderRadius: '16px',
       padding: '30px 20px',
-      width: '220px',
-      boxShadow: '0 10px 30px rgba(0, 0, 0, 0.05)',
+      width: '280px', // Taille augmentée
+      boxShadow: '0 15px 35px rgba(0, 0, 0, 0.1)',
       fontWeight: 500,
-      fontSize: '16px',
-      transition: 'all 0.3s',
+      fontSize: '18px', // Texte plus grand
+      transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
-      gap: '15px',
+      gap: '20px',
+      transform: 'scale(1.1)', // Agrandi en permanence
     },
     featureIcon: {
-      fontSize: '36px',
+      fontSize: '42px', // Icône plus grande
     },
   };
 
   // Données des fonctionnalités
   const features = [
-    { icon: '⚡', text: 'Tableau de bord' ,link:"/FraudAccountManagement" },
-    { icon: '🧠', text: 'account management',link:"/FraudMonitoringDashboard" },
+    { icon: '⚡', text: 'Tableau de bord', link: "/FraudAccountManagement" },
+    { icon: '🧠', text: 'Account management', link: "/FraudMonitoringDashboard" },
     { icon: '📊', text: 'Rapport détaillé', link: '/report' },
   ];
 
@@ -122,27 +125,21 @@ const Welcome = () => {
       {/* Header */}
       <header style={styles.header}>
         <div style={styles.logo}>
-          <img src="logo.png" alt="Logo Froud Detection" style={styles.logoImg} />
-          <span><strong>Froud Detection</strong></span>
+          <img src="logo.png" alt="Logo Fraud Detection" style={styles.logoImg} />
+          <span><strong>Fraud Detection</strong></span>
         </div>
         <nav>
           <a href="#" style={styles.navLink}>Accueil</a>
-          <a href="/login" style={styles.navLink}>Se connecter</a>
-          <a href="/register" style={styles.navLink}>S'inscrire</a>
-          
         </nav>
       </header>
 
       {/* Contenu principal */}
       <main style={styles.main}>
-        <h1 style={styles.h1}>welcome to</h1>
-        <h2 style={styles.h2}>Froud detection</h2>
-
         <a
           href="/dashboard"
           style={styles.highlight}
-          onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
-          onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+          onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.15)')}
+          onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1.1)')}
         >
           Analyser les transactions
         </a>
@@ -154,26 +151,24 @@ const Welcome = () => {
               key={index}
               style={styles.featureCard}
               onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-6px)';
-                e.currentTarget.style.boxShadow =
-                  '0 12px 32px rgba(0, 168, 107, 0.2)';
+                e.currentTarget.style.transform = 'scale(1.2)';
+                e.currentTarget.style.boxShadow = '0 20px 40px rgba(0, 168, 107, 0.3)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow =
-                  '0 10px 30px rgba(0, 0, 0, 0.05)';
+                e.currentTarget.style.transform = 'scale(1.1)';
+                e.currentTarget.style.boxShadow = '0 15px 35px rgba(0, 0, 0, 0.1)';
               }}
             >
               <div style={styles.featureIcon}>{feature.icon}</div>
               {feature.link ? (
                 <a
                   href={feature.link}
-                  style={{ textDecoration: 'none', color: 'black' }}
+                  style={{ textDecoration: 'none', color: 'black', fontSize: '20px' }}
                 >
                   {feature.text}
                 </a>
               ) : (
-                <div>{feature.text}</div>
+                <div style={{ fontSize: '20px' }}>{feature.text}</div>
               )}
             </div>
           ))}
