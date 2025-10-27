@@ -1,0 +1,21 @@
+/* Fond dégradé flouté */
+.welcome-bg {
+  position: relative;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.welcome-bg::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 20% 20%, #8ef5c6 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, #77d8f7 0%, transparent 50%);
+  z-index: -1;
+  filter: blur(80px);
+  -webkit-filter: blur(80px); /* Pour Safari */
+}

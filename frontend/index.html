@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/logo.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>fraude detection</title>
+  </head>
+  <body>
+      <style>
+    /* Désactive la sélection de texte pour éviter les conflits avec les extensions */
+    body {
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    /* Réactive la sélection pour les éléments qui en ont besoin */
+    input, textarea, [contenteditable] {
+      user-select: text;
+      -webkit-user-select: text;
+    }
+  </style>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

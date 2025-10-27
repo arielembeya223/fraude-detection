@@ -1,0 +1,10 @@
+{
+  "name": "fraude-detection-main",
+  "private": true,
+  "devDependencies": {
+    "concurrently": "^8.0.0"
+  },
+  "scripts": {
+    "start": "concurrently \"cd backend && php artisan serve --port=8000\" \"cd frontend && npm run dev -- --port 5173\" \"cd api && python app.py\""
+  }
+}
