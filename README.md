@@ -16,7 +16,7 @@ This project is a multi-component system for fraud detection simulation and user
 ```bash
 git clone https://github.com/arielembeya223/fraude-detection.git
 cd fraude-detection
-2️⃣ Prepare the backend environment
+###  2️⃣ Prepare the backend environment
 
 Before running the setup, make sure to create or modify the .env file in the backend/ folder with your database credentials and other required environment variables. You can copy the example file and edit it:
 cd backend
