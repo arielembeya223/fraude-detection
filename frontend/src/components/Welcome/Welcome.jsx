@@ -1,6 +1,6 @@
 import React from 'react';
 import './App.css';
-
+import { Link } from 'react-router-dom';
 const Welcome = () => {
   // Styles JSX
   const styles = {
@@ -129,7 +129,7 @@ const Welcome = () => {
           <span><strong>Fraud Detection</strong></span>
         </div>
         <nav>
-          <a href="#" style={styles.navLink}>Accueil</a>
+          <a href="/" style={styles.navLink}>Accueil</a>
         </nav>
       </header>
 
@@ -145,34 +145,38 @@ const Welcome = () => {
         </a>
 
         {/* Section fonctionnalités */}
-        <div style={styles.features}>
-          {features.map((feature, index) => (
-            <div
-              key={index}
-              style={styles.featureCard}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'scale(1.2)';
-                e.currentTarget.style.boxShadow = '0 20px 40px rgba(0, 168, 107, 0.3)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'scale(1.1)';
-                e.currentTarget.style.boxShadow = '0 15px 35px rgba(0, 0, 0, 0.1)';
-              }}
-            >
-              <div style={styles.featureIcon}>{feature.icon}</div>
-              {feature.link ? (
-                <a
-                  href={feature.link}
-                  style={{ textDecoration: 'none', color: 'black', fontSize: '20px' }}
-                >
-                  {feature.text}
-                </a>
-              ) : (
-                <div style={{ fontSize: '20px' }}>{feature.text}</div>
-              )}
-            </div>
-          ))}
-        </div>
+                <div style={styles.features}>
+                  {features.map((feature, index) => (
+                    feature.link ? (
+                      <Link
+                        key={index}
+                        to={feature.link}
+                        style={{ textDecoration: 'none' }}
+                      >
+                        <div
+                          style={styles.featureCard}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.transform = 'scale(1.2)';
+                            e.currentTarget.style.boxShadow = '0 20px 40px rgba(0,168,107,0.3)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = 'scale(1.1)';
+                            e.currentTarget.style.boxShadow = '0 15px 35px rgba(0,0,0,0.1)';
+                          }}
+                        >
+                          <div style={styles.featureIcon}>{feature.icon}</div>
+                          <div style={{ fontSize: '20px', color: 'black' }}>{feature.text}</div>
+                        </div>
+                      </Link>
+                    ) : (
+                      <div key={index} style={styles.featureCard}>
+                        <div style={styles.featureIcon}>{feature.icon}</div>
+                        <div style={{ fontSize: '20px' }}>{feature.text}</div>
+                      </div>
+                    )
+                  ))}
+                </div>
+
       </main>
     </div>
   );
