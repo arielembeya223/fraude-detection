@@ -5,7 +5,7 @@
     "concurrently": "^8.0.0"
   },
   "scripts": {
-    "prepare-backend": "cd backend && composer install && php artisan migrate && php artisan config:clear && php artisan cache:clear",
+    "prepare-backend": "cd backend && composer install && php artisan key:generate && php artisan migrate --force && php artisan config:clear && php artisan cache:clear",
     "prepare-frontend": "cd frontend && npm install",
     "prepare-api": "cd api && pip install -r requirements.txt",
     "setup": "npm run prepare-backend && npm run prepare-frontend && npm run prepare-api",
