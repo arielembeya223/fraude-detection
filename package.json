@@ -5,6 +5,10 @@
     "concurrently": "^8.0.0"
   },
   "scripts": {
-    "start": "concurrently \"cd backend && php artisan serve --port=8000\" \"cd frontend && npm run dev -- --port 5173\" \"cd api && python app.py\""
+    "prepare-backend": "cd backend && composer install && php artisan migrate && php artisan config:clear && php artisan cache:clear",
+    "prepare-frontend": "cd frontend && npm install",
+    "prepare-api": "cd api && pip install -r requirements.txt",
+    "setup": "npm run prepare-backend && npm run prepare-frontend && npm run prepare-api",
+    "start": "npm run setup && concurrently \"cd backend && php artisan serve --port=8000\" \"cd frontend && npm run dev -- --port 5173\" \"cd api && python app.py\""
   }
 }
